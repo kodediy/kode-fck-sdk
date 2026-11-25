@@ -1,0 +1,46 @@
+name: Documentation
+description: A header comment, a README or a page of docs.kode.diy about the module is wrong, missing or unclear.
+type: Task
+labels:
+  - documentation
+assignees:
+  - vmlorenzorod
+body:
+  - type: markdown
+    attributes:
+      value: |
+        When a header and the code disagree, the code is the truth and the header is the bug. When the code and the module disagree, the module is. Say what the documentation claims, what is true, and how you know.
+
+  - type: input
+    id: location
+    attributes:
+      label: Where
+      description: The file and symbol, or the URL.
+      placeholder: components/fck_bsp/board/include/fck_bsp.h, FCK_BSP_POSITION_C5_RESET
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong
+      options:
+        - Wrong - it does not match the code or the module
+        - Missing - nothing covers it
+        - Unclear - it is there but hard to follow
+        - Broken link or formatting
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What it says, what is true, and the evidence - a `file:line`, a return code, a measurement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording

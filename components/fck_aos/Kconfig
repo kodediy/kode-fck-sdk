@@ -1,0 +1,29 @@
+menu "F*CK module SDK"
+
+    config FCK_AO_PRIORITY
+        int "Priority of the module's owner (0: KODE_PRIO_USER_HIGH)"
+        range 0 24
+        default 0
+        help
+            The QP/C priority of the Active Object that owns the F*CK
+            module, which is also its task's FreeRTOS priority. 0 takes
+            kode-sdk's KODE_PRIO_USER_HIGH; fck_ao.c says why. Level 3 is
+            kode-sdk's own and is refused. Two Active Objects at one level
+            are refused too (the start answers KODE_EXISTS), so an app whose
+            own Active Object needs KODE_PRIO_USER_HIGH moves this one to a
+            level nothing in its image holds. With CONFIG_KODE_SCHEDULER
+            there is no KODE_PRIO_USER_HIGH: set a level here.
+
+    config FCK_SIG_OFFSET
+        int "First signal of the F*CK SDK, above kode-sdk's MAX_SIG"
+        range 1000 60000
+        default 1300
+        help
+            fck_sys.h posts every signal to the Active Object it concerns, and an Active
+            Object of the app cannot publish, so they live in a range of their own: MAX_SIG +
+            this value, 90 numbers for what an app sees and 10 after them for the owner. The
+            default sits beside the other module SDKs' (Mesh 1000, Robotics 1100, Camera
+            1200). An app's own signals are MAX_SIG to MAX_SIG + 999; an app that also uses
+            another module SDK keeps their ranges apart.
+
+endmenu

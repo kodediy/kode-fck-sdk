@@ -1,0 +1,67 @@
+# The nRF54L15's map on the F*CK: MCUboot in the first 31 KB, which is all the chip can close to the
+# image (RRAMC region 4), and one slot for the image, its header at 0xE000 and its code at 0xE800.
+# The image's place is where the two-slot map (fck_bsp.h) has it, so one link address serves both.
+# 0x165000-0x17D000 is not MCUboot's nor the slot's: a firmware keeps its own data there.
+EMPTY_0:
+  address: 0x7c00
+  end_address: 0xe000
+  placement:
+    after:
+    - mcuboot
+  region: flash_primary
+  size: 0x6400
+EMPTY_1:
+  address: 0x165000
+  end_address: 0x17d000
+  placement:
+    after:
+    - mcuboot_primary
+  region: flash_primary
+  size: 0x18000
+app:
+  address: 0xe800
+  end_address: 0x165000
+  region: flash_primary
+  size: 0x156800
+bootconf:
+  address: 0xffd080
+  end_address: 0xffd084
+  region: bootconf
+  size: 0x4
+mcuboot:
+  address: 0x0
+  end_address: 0x7c00
+  placement:
+    align:
+      end: 0x400
+    before:
+    - mcuboot_primary
+  region: flash_primary
+  size: 0x7c00
+mcuboot_pad:
+  address: 0xe000
+  end_address: 0xe800
+  placement:
+    align:
+      start: 0x1000
+    before:
+    - mcuboot_primary_app
+  region: flash_primary
+  size: 0x800
+mcuboot_primary:
+  address: 0xe000
+  end_address: 0x165000
+  orig_span: &id001
+  - app
+  - mcuboot_pad
+  region: flash_primary
+  size: 0x157000
+  span: *id001
+mcuboot_primary_app:
+  address: 0xe800
+  end_address: 0x165000
+  orig_span: &id002
+  - app
+  region: flash_primary
+  size: 0x156800
+  span: *id002

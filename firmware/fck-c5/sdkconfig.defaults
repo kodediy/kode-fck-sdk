@@ -1,0 +1,116 @@
+CONFIG_IDF_TARGET="esp32c5"
+
+# 4 MB: the flash the module's C5 has, an ESP32-C5-MINI-1U-N4T2 (c5/README.md), declared as it is in the
+# image header. The table is still ESP-IDF's single-app-large, so the app partition ends at 0x187000 and
+# everything this firmware writes or reads stays in the first 2 MB. ESP-IDF stops at start-up on a chip
+# whose flash is smaller than the header says: on a C5 with less than 4 MB this image would not run.
+#
+# The size is taken from the module's part number as c5/README.md gives it. The SDK's ROM probe reports
+# the size a chip's flash ID says, and so does `esptool flash-id`.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# Size matters: an app on the Kode embeds this image and fck_flash() sends it through the ROM
+# loader. The firmware only scans, it never associates,
+# so everything the supplicant needs for WPA3/OWE/enterprise/SoftAP is left out.
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+# CONFIG_ESP_WIFI_ENABLE_WPA3_SAE is not set
+# CONFIG_ESP_WIFI_ENABLE_WPA3_OWE_STA is not set
+# CONFIG_ESP_WIFI_SOFTAP_SUPPORT is not set
+# CONFIG_ESP_WIFI_ENTERPRISE_SUPPORT is not set
+# CONFIG_ESP_WIFI_GMAC_SUPPORT is not set
+# No NVS: Wi-Fi settings live in RAM and the PHY runs a full calibration at every boot,
+# which is fine for this firmware and saves the NVS library.
+# CONFIG_ESP_WIFI_NVS_ENABLED is not set
+# CONFIG_ESP_PHY_CALIBRATION_AND_DATA_STORAGE is not set
+# The supplicant is linked but never runs a handshake: no GCM, SHA-384/512
+# or certificate bundle (RSA and ECC stay: other IDF configs select them).
+# CONFIG_MBEDTLS_CERTIFICATE_BUNDLE is not set
+# CONFIG_MBEDTLS_GCM_C is not set
+# CONFIG_MBEDTLS_SHA384_C is not set
+# CONFIG_MBEDTLS_SHA512_C is not set
+# CONFIG_MBEDTLS_SELF_TEST is not set
+# CONFIG_MBEDTLS_ERROR_STRINGS is not set
+
+# UART0 (IO11 TX / IO12 RX, 115200) is the line protocol to the P4. The console stays there so
+# a panic or an ESP_LOGE is still visible, but nothing below ERROR may print on it, and no ANSI
+# colours: the P4 relays every line as "#C5 <line>".
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_UART_BAUDRATE=115200
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+CONFIG_LOG_DEFAULT_LEVEL_ERROR=y
+# CONFIG_LOG_COLORS is not set
+CONFIG_BOOTLOADER_LOG_LEVEL_NONE=y
+
+# The command loop runs the Wi-Fi scan and formats the AP lines on the main task.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=6144
+
+# A command loop that hangs restarts the C5. The loop subscribes to the task watchdog (fck_c5.c) and feeds it
+# every 500 ms at most, inside the longest command too, so 8 s without a feed is a loop that is stuck, not
+# one that is busy. With PANIC the watchdog does not only print: it resets the chip, the firmware greets
+# again and the Kode sees that it restarted. Without it nothing would bring a hung module back.
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_INIT=y
+CONFIG_ESP_TASK_WDT_PANIC=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=8
+# What a panic does, the watchdog's or any other: say why on UART0 and restart. Never halt.
+CONFIG_ESP_SYSTEM_PANIC_PRINT_REBOOT=y
+
+# `ble scan`: NimBLE host + the C5's LE controller, observer role only (passive scan). The stack
+# is brought up on the first `ble scan`, not at boot. Wi-Fi/BLE software coexistence stays on
+# (ESP_COEX_SW_COEXIST_ENABLE default): both radios share the 2.4 GHz front end.
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+# CONFIG_BT_BLUEDROID_ENABLED is not set
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=y
+# CONFIG_BT_NIMBLE_ROLE_CENTRAL is not set
+# CONFIG_BT_NIMBLE_ROLE_PERIPHERAL is not set
+# CONFIG_BT_NIMBLE_ROLE_BROADCASTER is not set
+# CONFIG_BT_NIMBLE_GATT_CLIENT is not set
+# CONFIG_BT_NIMBLE_GATT_SERVER is not set
+# CONFIG_BT_NIMBLE_SECURITY_ENABLE is not set
+# CONFIG_BT_NIMBLE_NVS_PERSIST is not set
+# CONFIG_BT_NIMBLE_GAP_SERVICE is not set
+# CONFIG_BT_NIMBLE_50_FEATURE_SUPPORT is not set
+# CONFIG_BT_NIMBLE_ENABLE_CONN_REATTEMPT is not set
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+CONFIG_BT_NIMBLE_LOG_LEVEL_NONE=y
+# CONFIG_BT_NIMBLE_PRINT_ERR_NAME is not set
+
+# No IEEE 802.15.4 on this module. ESP-IDF turns it on for every chip that has the radio, the C5
+# among them, so it is turned off here: the firmware never used it, and now it is not compiled in either.
+# CONFIG_IEEE802154_ENABLED is not set
+
+# The second-stage bootloader, for production. Nothing here burns an eFuse, and nothing may: the Kode
+# writes the C5 through its ROM loader, and an eFuse is the one thing that can close that door for good.
+#
+# The C5's ROM has an anti-rollback scheme for the second-stage bootloader, with secure versions 0 to 4.
+# This bootloader carries the highest, 4, in its descriptor, so a ROM that is ever told to check takes it
+# whatever version its eFuse then holds. ESP-IDF only offers the secure version with the recovery
+# bootloader support on, hence RECOVERY_ENABLE; of these three options the build uses nothing but the
+# number it writes in the descriptor (esp_bootloader_desc.c).
+#
+# The ROM looks at the secure version only on a chip whose eFuse BOOTLOADER_ANTI_ROLLBACK_EN is burnt, and
+# for a recovery bootloader only where RECOVERY_BOOTLOADER_FLASH_SECTOR is; it raises the version eFuse
+# itself only where BOOTLOADER_ANTI_ROLLBACK_UPDATE_IN_ROM is. This firmware burns none of them, and no
+# recovery bootloader is written: RECOVERY_OFFSET only reserves where one would go, inside the first 2 MB
+# and past the end of the app partition (0x187000).
+CONFIG_BOOTLOADER_RECOVERY_ENABLE=y
+CONFIG_BOOTLOADER_RECOVERY_OFFSET=0x1F0000
+CONFIG_BOOTLOADER_ANTI_ROLLBACK_ENABLE=y
+CONFIG_BOOTLOADER_SECURE_VERSION=4
+# What would burn eFuses the first time the firmware starts, written out so that turning one on is a line
+# somebody has to change: Secure Boot, flash encryption, the app's anti-rollback (which is not the
+# bootloader's, above) and any ROM log setting but the one the chip is born with.
+# CONFIG_SECURE_BOOT is not set
+# CONFIG_SECURE_FLASH_ENC_ENABLED is not set
+# CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE is not set
+# CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK is not set
+CONFIG_BOOT_ROM_LOG_ALWAYS_ON=y
+
+# Production build: a reproducible image (the same sha256 from any folder). The version is not set here: it
+# is PROJECT_VER in CMakeLists.txt, which ESP-IDF puts in the app descriptor, where the factory can read it
+# off the chip and the firmware reads it for its #C5INFO. CONFIG_APP_PROJECT_VER_FROM_CONFIG would replace
+# it with a second number, so it stays off.
+CONFIG_APP_REPRODUCIBLE_BUILD=y
+# CONFIG_APP_PROJECT_VER_FROM_CONFIG is not set

@@ -1,0 +1,9 @@
+# The factory firmware's table up to the app, at the same places (ESP-IDF's
+# single-app-large), and the app taking the rest of the 4 MB. The firmware keeps
+# NVS off, so what this firmware stores there is still there after a trip to
+# the firmware and back: writing either firmware touches 0x2000, 0x8000 and
+# 0x10000 onwards, never 0x9000.
+# Name,     Type, SubType, Offset,   Size
+nvs,        data, nvs,     0x9000,   0x6000,
+phy_init,   data, phy,     0xf000,   0x1000,
+factory,    app,  factory, 0x10000,  0x3F0000,

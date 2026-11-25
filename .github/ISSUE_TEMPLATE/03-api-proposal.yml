@@ -1,0 +1,62 @@
+name: API proposal
+description: A new fck_* call or event, or a change to an existing one.
+type: Feature
+assignees:
+  - vmlorenzorod
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The rules every call keeps: one owner holds the module, and every call asks it. A call of `fck.h` blocks and says so, waits for at most the time it is given and returns `bool`, with `fck_error()` for why. A request of `fck_sys.h` never waits: it takes the asking Active Object first and is answered with a signal. Nothing an app calls makes the module transmit outside its radio limits (the sub-GHz bands in `fck_bsp.h` and the hour's air time in `fck.h`, the firmwares' limits in `firmware/`), and a call that transmits says TRANSMITS in its `@brief`. A proposal that has to break one says why in **Risks**.
+
+        Not sure it is worth a proposal yet? Start a [discussion](https://github.com/kodediy/kode-fck-sdk/discussions) instead.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Background and motivation
+      description: The problem this solves, who hits it and how they work around it today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API
+      description: The declarations as they would appear in `fck.h` and `fck_sys.h`, each with its Doxygen `@brief`, `@param` and `@return`, whether it blocks and whether it transmits. For an event, the name and the signal.
+      render: c
+    validations:
+      required: true
+
+  - type: textarea
+    id: usage
+    attributes:
+      label: Usage
+      description: How an app would call it - a few lines of real code, on a task of its own or in an Active Object.
+      render: c
+    validations:
+      required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      description: |
+        Knows a position, an expander bit, a leg or a flash map: fck_bsp. Knows a chip, a protocol or an ESP-IDF peripheral: fck_drv. Holds the module or decides when: fck_aos. Is what a task calls: fck. Is what an Active Object calls: fck_sys. Runs on the module's chips: the firmware (`firmware/`).
+      multiple: true
+      options:
+        - fck (the standard layer, fck.h)
+        - fck_sys (the extended layer, fck_sys.h)
+        - fck_aos
+        - fck_drv
+        - fck_bsp
+        - The module's firmware (firmware/)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Breaking changes, something that transmits (which band, what power, which limit covers it), a UART or I2C bus held for long, bytes lost while flash is written, RAM.

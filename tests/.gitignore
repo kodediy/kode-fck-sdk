@@ -1,0 +1,9 @@
+build/
+build_san/
+build.log
+sdkconfig
+sdkconfig.old
+run.log
+managed_components/
+dependencies.lock
+build*/

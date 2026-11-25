@@ -1,0 +1,69 @@
+name: target-build
+
+# The SDK compiled and linked for the esp32p4, against the kode-sdk release
+# the projects pin (v0.1.5), the way an app builds it (tests/target and the
+# seven examples). A file of its own rather than a job in host-tests.yml:
+# that one is the check every pull request waits a few minutes for, and
+# eight builds for the chip would slow it.
+# Same triggers and the same paths-ignore list; workflow_dispatch is for a
+# branch nobody has opened a pull request for. No secrets: kode-sdk is
+# public, and the component manager fetches it over https.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/workflows/assign.yml'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/workflows/assign.yml'
+  workflow_dispatch:
+  # release.yml calls this as its gate, on the commit the tag names.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: target-build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: esp32p4
+    runs-on: ubuntu-24.04
+    # Eight builds in a row: tests/target and the seven examples.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build tests/target
+        uses: espressif/esp-idf-ci-action@e6f5c74232b1ccd4c97ed641f1e48553853f1fd5 # v1.2.0
+        with:
+          esp_idf_version: v6.1
+          target: esp32p4
+          path: tests/target
+          # After the build, the internal RAM check: what the image puts in
+          # the 640 KB of internal RAM at link time, against
+          # tests/target/ram_budget.txt. A build that takes too much still links and
+          # still passes the host suites, and fails on a board - see
+          # tools/check_ram.sh.
+          command: |
+            idf.py build || exit 1
+            ../../tools/check_ram.sh build/fck_target.elf ram_budget.txt || exit 1
+
+      - name: Build the examples
+        uses: espressif/esp-idf-ci-action@e6f5c74232b1ccd4c97ed641f1e48553853f1fd5 # v1.2.0
+        with:
+          esp_idf_version: v6.1
+          target: esp32p4
+          path: examples
+          command: |
+            for p in module wifi radio subghz gnss wardriving console_actions; do
+              (cd "$p" && idf.py build) || exit 1
+            done
