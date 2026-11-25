@@ -1,0 +1,26 @@
+## kode-sdk at release v0.1.5, the one kodeOS builds its apps with,
+## and the F*CK SDK from this checkout. An app outside this repository pins
+## fck_sys from git instead, at a release:
+##
+##   kodediy/fck_sys:
+##     git: https://github.com/kodediy/kode-fck-sdk.git
+##     path: components/fck_sys
+##     version: <tag>
+##
+## and the rest (fck, fck_aos, fck_drv and fck_bsp) arrive at the same commit through its
+## own manifest.
+dependencies:
+  kodediy/kode:
+    git: https://github.com/kodediy/kode-sdk.git
+    path: components/kode
+    version: v0.1.5
+  kodediy/fck:
+    override_path: "../../../components/fck"
+  kodediy/fck_sys:
+    override_path: "../../../components/fck_sys"
+  kodediy/fck_aos:
+    override_path: "../../../components/fck_aos"
+  kodediy/fck_drv:
+    override_path: "../../../components/fck_drv"
+  kodediy/fck_bsp:
+    override_path: "../../../components/fck_bsp"

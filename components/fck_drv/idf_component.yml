@@ -1,0 +1,22 @@
+version: "0.1.0"
+description: "The F*CK module's drivers: the firmwares' line protocol, and the chips behind it"
+url: "https://docs.kode.diy/modules/fck"
+repository: "https://github.com/kodediy/kode-fck-sdk.git"
+repository_info:
+  path: "components/fck_drv"
+license: "GPL-3.0-or-later"
+targets:
+  - esp32p4
+
+## The module's facts by path in this repository, and at the same commit when
+## fetched by git. kode_status_t (kdefs) comes from the kode-sdk the app pins
+## - see components/fck/idf_component.yml - and from tests/host's own clone.
+dependencies:
+  idf: ">=6.1"
+  kodediy/fck_bsp: {version: "==0.1.0", override_path: "../fck_bsp"}
+  ## The C5's ROM loader (fck_drv_c5_rom.c). Built and checked against 2.1.0.
+  ## A range, so that an app that takes another component asking for ^2.0.0
+  ## beside this SDK resolves to one release that meets both.
+  espressif/esp-serial-flasher:
+    version: "^2.1.0"
+    require: private

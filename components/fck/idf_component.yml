@@ -1,0 +1,24 @@
+version: "0.1.0"
+description: "The F*CK module for Kode Dot apps: the standard layer, fck.h, and the one dependency an app names"
+url: "https://docs.kode.diy/modules/fck"
+repository: "https://github.com/kodediy/kode-fck-sdk.git"
+repository_info:
+  path: "components/fck"
+license: "GPL-3.0-or-later"
+targets:
+  - esp32p4
+
+## The entry point of this SDK's graph: an app pins kodediy/fck and gets the
+## owner, the drivers and the module's facts from the same commit.
+##
+## kode-sdk is not pinned here, nor anywhere under components/: the app pins
+## it, once, in its own main/idf_component.yml, and these components build on
+## whatever release that is (v0.1.5 or later). Two pins of kodediy/kode at
+## two refs cannot be solved.
+##
+## Siblings: by path in this repository, and at the same commit when fetched
+## by git. The version moves with every release.
+dependencies:
+  idf: ">=6.1"
+  kodediy/fck_aos: {version: "==0.1.0", override_path: "../fck_aos"}
+  kodediy/fck_bsp: {version: "==0.1.0", override_path: "../fck_bsp"}

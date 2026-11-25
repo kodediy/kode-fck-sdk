@@ -1,0 +1,18 @@
+version: "0.1.0"
+description: "The F*CK module for the Active Objects of a Kode Dot app: the extended layer, fck_sys.h"
+url: "https://docs.kode.diy/modules/fck"
+repository: "https://github.com/kodediy/kode-fck-sdk.git"
+repository_info:
+  path: "components/fck_sys"
+license: "GPL-3.0-or-later"
+targets:
+  - esp32p4
+
+## Siblings: by path in this repository, and at the same commit when fetched
+## by git (see components/fck/idf_component.yml). kode-sdk is the app's own
+## pin (kodediy/kode, v0.1.5 or later).
+dependencies:
+  idf: ">=6.1"
+  kodediy/fck:     {version: "==0.1.0", override_path: "../fck"}
+  kodediy/fck_aos: {version: "==0.1.0", override_path: "../fck_aos"}
+  kodediy/fck_bsp: {version: "==0.1.0", override_path: "../fck_bsp"}

@@ -1,0 +1,47 @@
+CONFIG_IDF_TARGET="esp32c5"
+
+# The module's C5 is an ESP32-C5-MINI-1U-N4T2: 4 MB of flash and no PSRAM.
+# The module's own firmware declares the same 4 MB and keeps its app small
+# enough for the Kode to carry; a firmware of your own has the whole chip
+# (partitions.csv).
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Nothing that burns eFuses: Secure Boot, flash encryption and the ROM's log
+# off would each close the C5 to the Kode for good, and main.c stops the
+# build if one is turned on. The bootloader's anti-rollback burns nothing by
+# itself in ESP-IDF v6.1, and stays off here all the same: it is one step
+# from the eFuses that make the ROM refuse an older bootloader.
+# CONFIG_SECURE_BOOT is not set
+# CONFIG_SECURE_FLASH_ENC_ENABLED is not set
+# CONFIG_BOOTLOADER_ANTI_ROLLBACK_ENABLE is not set
+CONFIG_BOOT_ROM_LOG_ALWAYS_ON=y
+
+# UART0 (IO11 TX, IO12 RX, 115200) is the link to the Kode, and it is also
+# where the ROM prints at reset. The console stays there so a panic is still
+# seen, but nothing below ERROR prints, without colours, and the bootloader
+# says nothing: the Kode reads every line as part of the protocol.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+CONFIG_ESP_CONSOLE_UART_BAUDRATE=115200
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+CONFIG_LOG_DEFAULT_LEVEL_ERROR=y
+# CONFIG_LOG_COLORS is not set
+CONFIG_BOOTLOADER_LOG_LEVEL_NONE=y
+
+# The command loop runs the Wi-Fi scan and prints its lines on the main task.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=6144
+
+# The greeting's ver=: digits and dots, up to three numbers, which is what the
+# Kode's SDK reads (fck_c5_parse_info()). Change it with every release.
+CONFIG_APP_PROJECT_VER_FROM_CONFIG=y
+CONFIG_APP_PROJECT_VER="0.1.0"
+
+# No 802.15.4 on this module. ESP-IDF turns it on for every chip that has
+# it; off here, and fck_c5_ce.c stops the build if it is turned on.
+# CONFIG_IEEE802154_ENABLED is not set
+
+# Wi-Fi as a station only: no access point on 5 GHz, and the radio limits
+# are set on the station. Off here, and fck_c5_ce.c stops the build if it is
+# turned on.
+# CONFIG_ESP_WIFI_SOFTAP_SUPPORT is not set

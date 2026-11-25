@@ -1,0 +1,15 @@
+menu "F*CK C5 firmware"
+
+    config FCK_C5_FW_NAME
+        string "Name this firmware greets the Kode with"
+        default "c5_firmware"
+        help
+            The fw= of its #C5INFO line: 1 to 23 letters, digits, '_', '.' or
+            '-', and anything but "fck-c5" or "c5_fck_agent", the official
+            firmware's names.
+            The build checks both. The Kode's SDK reads it to know this is not
+            the module's own firmware (fck_firmware_t.official). Which of its
+            typed calls the SDK sends is decided by the caps= of the same
+            line, not by this name.
+
+endmenu

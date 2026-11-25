@@ -1,0 +1,17 @@
+version: "0.1.0"
+description: "The F*CK module's owner: the Active Object that finds the module and holds it"
+url: "https://docs.kode.diy/modules/fck"
+repository: "https://github.com/kodediy/kode-fck-sdk.git"
+repository_info:
+  path: "components/fck_aos"
+license: "GPL-3.0-or-later"
+targets:
+  - esp32p4
+
+## Siblings: by path in this repository, and at the same commit when fetched
+## by git (see components/fck/idf_component.yml). kode-sdk (kode.h, for
+## kode_sys_exp_lend()) comes from the app's own pin.
+dependencies:
+  idf: ">=6.1"
+  kodediy/fck_drv: {version: "==0.1.0", override_path: "../fck_drv"}
+  kodediy/fck_bsp: {version: "==0.1.0", override_path: "../fck_bsp"}

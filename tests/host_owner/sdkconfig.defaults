@@ -1,0 +1,3 @@
+# The owner's ticks are milliseconds on the Dot (kbsp's sdkconfig.board), and
+# the model's timings are written in them.
+CONFIG_FREERTOS_HZ=1000

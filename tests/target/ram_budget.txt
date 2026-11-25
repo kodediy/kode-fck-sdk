@@ -1,0 +1,90 @@
+# The budget of internal RAM for this project, read by tools/check_ram.sh:
+#
+#   ../../tools/check_ram.sh build/fck_target.elf ram_budget.txt
+#
+# This project links kode-sdk at the release the tree pins (v0.1.5, the
+# one kodeOS builds its apps with) with every F*CK
+# component on top, and CONFIG_KODEOS_RADIO=y as every app of the module
+# needs it, so what it takes of the ESP32-P4's 640 KB of internal RAM at link
+# time is what an app that uses the module starts with. Nearly all of it is
+# kode-sdk's: the module's own are AO_Fck's stack and the two lines of its
+# own below (fck_sys's two executor tasks and its end task take their stacks
+# from the heap when they start, not here).
+#
+# static_max is the ceiling of that static image - code in IRAM, .data and
+# .bss, CONFIG_UART_ISR_IN_IRAM's driver among them. check_ram.sh prints what
+# the build takes and what is left under it: read it there, not here. A change
+# that needs more either moves something to PSRAM or raises this number in the
+# same commit, where a reviewer sees it. kode-sdk's own target keeps 364000
+# for itself.
+static_max 336000
+
+# Every data symbol of 2048 bytes or more in internal RAM, with the source
+# file that defines it and the most it may be. A static this size that is not
+# listed fails the check: a buffer belongs in PSRAM (khal_alloc_psram() in
+# kode-sdk), and the ones below are here because something forces them to be
+# internal. They are kode-sdk's and the libraries', listed at the size they
+# have so that a pin that moves and grows one is seen.
+#
+# symbol               source file          max bytes
+
+# AO_Fck's stack: KQP_AO_STACK_BYTES, kode-sdk's default for an Active
+# Object, internal for the reason kode-sdk's own are. Its steps call no
+# deep library, so its high-water mark on a board may let it shrink. The
+# worker's 6 KB are taken from the heap when the owner starts, not here.
+l_stack                fck_ao.c             8192
+
+# The owner's state: both links' line buffers, each chip's banner, the GNSS
+# fix and the posted lines that wait for each chip. Internal: ESP-IDF's
+# restart hook reads it while the P4 goes down.
+s                      fck_aos.c            2792
+
+# A sub-GHz spectrum's half-dB readings (FCK_SUBGHZ_POINTS_MAX of int16_t),
+# filled and read inside its job alone. This target's link drops it, but an
+# app that sweeps the spectrum keeps it, and an app
+# copies these lines: listed so that its check passes. It could move to PSRAM.
+s_half                 fck_subghz.c         2048
+
+# The nRF's DFU: one SMP packet and its base64 line, while an image is
+# written.
+s                      fck_drv_nrf_dfu.c    2400
+
+# The stacks of the system Active Objects (kqp_config.h's tiers), each in the
+# file of its Active Object since kode-sdk v0.1.0. Internal because an AO
+# may write flash, which takes PSRAM out of reach while the write lasts.
+console_stack          console_ao.c         8192
+storage_stack          storage_ao.c         6144
+radio_stack            radio_ao.c           6144
+power_stack            power_ao.c           4096
+log_stack              log_ao.c             4096
+ioexp_stack            ioexp_ao.c           4096
+boot_stack             boot_ao.c            4096
+autotest_stack         autotest_ao.c        4096
+buttons_stack          buttons_ao.c         3072
+
+# QP/C's three event pools.
+s_jumbo_pool           kqp.c                16560
+s_medium_pool          kqp.c                16128
+s_large_pool           kqp.c                16128
+
+# The console's Active Object. It grows with the verbs, so the line leaves
+# room.
+l_console              console_ao.c         4096
+
+# kode-sdk's own buffers and tables: the NFC card emulation's symbol, edge and
+# pair tables, the file buffer, the app catalogue.
+s_picc_symbols         knfc_emu_hal.c       11744
+s_picc_edges           knfc_emu_hal.c       5868
+s_picc_pairs           knfc_emu_hal.c       4404
+s_fs_buf               kode.c               4096
+s_blob                 kapp_cat.c           2316
+s_rows                 kapp_cat.c           2304
+s_recv_buf             appmgr_ao.c          4096
+s_adopt_buf            appmgr_ao.c          4096
+
+# What the libraries declare. Listed so that a version bump that grows one
+# of them is seen.
+xIsrStack              port.c               3072
+s_watch_stack          khal_system_esp.c    3072
+s_retention            sleep_retention.c    2724
+gNfcDev                rfal_nfc.c           2292

@@ -1,0 +1,83 @@
+/*
+ * FCK module (KDFCK001 rev 1.0, Sept 2026) - nRF54L15 U701 (Minew ME54BS61) for fck-nrf.
+ *
+ * Host link = one UART to the ESP32-P4 (the SDK's fck_drv_nrf):
+ *   nRF P2.02 (NRF.TX, pad B5) -> J401.12 -> P4 GPIO21
+ *   nRF P2.00 (NRF.RX, pad A7) <- J401.14 <- P4 GPIO20
+ * The Zephyr shell AND mcumgr SMP (shell transport) share it, so uart00 is both the shell UART
+ * and the console. There is NO zephyr,uart-mcumgr here on purpose: CONFIG_MCUMGR_TRANSPORT_UART
+ * is off (it would claim uart00's IRQ callback against the shell backend). MCUboot has its own
+ * overlay (sysbuild/mcuboot.overlay) where uart00 IS zephyr,uart-mcumgr for serial recovery.
+ *
+ * Board fixes:
+ *  - spi00 disabled: SERIAL00 @0x4a000 is spi00 OR uart00, never both.
+ *  - mx25r64 disabled: the DK hangs an external flash off spi00; the FCK has none.
+ *  - uart00_clk fixed-clock 128 MHz: UARTE00 PCLK is 128 MHz but BAUDRATE constants are
+ *    16 MHz-based; without a `clocks` phandle 115200 becomes 921600 on the wire (8x).
+ *  - uart20 disabled: DK console on P1, not wired to anything useful on the FCK.
+ * P0.00 (NRF_WP_HOST, heartbeat) and P0.02 (HOST_WP_NRF) stay free: uart30, which owns
+ * P0.00-P0.03 in the DK pinctrl, is disabled by default in the SoC dtsi.
+ *
+ * wdt31 is the firmware's watchdog (main.c). It is enabled here only, for the application:
+ * MCUboot's overlay leaves it disabled, and MCUboot neither starts nor feeds it.
+ */
+
+/ {
+	chosen {
+		zephyr,console = &uart00;
+		zephyr,shell-uart = &uart00;
+		/* DK default points at uart20; SMP rides the shell here, so drop it explicitly. */
+		/delete-property/ zephyr,uart-mcumgr;
+	};
+
+	uart00_clk: uart00-clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <128000000>;
+	};
+};
+
+&pinctrl {
+	uart00_default: uart00_default {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 2, 2)>;
+		};
+		group2 {
+			psels = <NRF_PSEL(UART_RX, 2, 0)>;
+			bias-pull-up;
+		};
+	};
+
+	uart00_sleep: uart00_sleep {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 2, 2)>,
+				<NRF_PSEL(UART_RX, 2, 0)>;
+			low-power-enable;
+		};
+	};
+};
+
+&uart00 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart00_default>;
+	pinctrl-1 = <&uart00_sleep>;
+	pinctrl-names = "default", "sleep";
+	clocks = <&uart00_clk>;
+};
+
+&uart20 {
+	status = "disabled";
+};
+
+&wdt31 {
+	status = "okay";
+};
+
+&spi00 {
+	status = "disabled";
+};
+
+&mx25r64 {
+	status = "disabled";
+};

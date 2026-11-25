@@ -1,0 +1,12 @@
+version: "0.1.0"
+description: "The F*CK module (KDFCK001) described: J3 positions, expander bits, antenna legs, flash maps"
+url: "https://docs.kode.diy/modules/fck"
+repository: "https://github.com/kodediy/kode-fck-sdk.git"
+repository_info:
+  path: "components/fck_bsp"
+license: "GPL-3.0-or-later"
+targets:
+  - esp32p4
+
+dependencies:
+  idf: ">=6.1"
