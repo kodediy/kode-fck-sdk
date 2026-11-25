@@ -1,5 +1,7 @@
 <div align="center" markdown="1">
 
+<img src="docs/images/fck-module.png" alt="The F*CK module" width="200">
+
 # kode-fck-sdk
 
 **The SDK for the F\*CK module of the Kode Dot: Wi-Fi, Bluetooth, 2.4 GHz, sub-GHz and GNSS from an app, in C**
